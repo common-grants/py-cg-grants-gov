@@ -6,9 +6,9 @@ from common_grants_sdk.extensions import Plugin
 from .cg_config import config
 from .generated import schemas
 
-custom_fields = Plugin(
+grants_gov = Plugin(
     extensions=config.extensions,
     schemas=schemas,
 )
 
-__all__ = ["custom_fields", "schemas"]
+__all__ = ["grants_gov", "schemas"]

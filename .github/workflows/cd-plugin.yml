@@ -19,7 +19,8 @@ jobs:
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: python
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
 
   deploy:
     needs: release-please
@@ -45,9 +46,8 @@ jobs:
       - name: Install Poetry
         uses: Gr1N/setup-poetry@v8
 
+      - name: Build package
+        run: poetry build
+
       - name: Publish to PyPI
-        env:
-          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
-        run: |
-          poetry build
-          poetry publish
+        uses: pypa/gh-action-pypi-publish@release/v1
