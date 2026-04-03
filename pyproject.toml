@@ -13,10 +13,10 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["plugin"]
+packages = ["cg_extension_framework"]
 
 [tool.poetry]
-packages = [{include = "plugin"}]
+packages = [{include = "cg_extension_framework"}]
 
 [tool.poetry.group.dev.dependencies]
 black = "^26.3.1"
@@ -25,4 +25,4 @@ mypy = "^1.20.0"
 pytest = "^9.0.2"
 
 [project.entry-points."common_grants_sdk.plugins"]
-grants_gov = "plugin"
+grants_gov = "cg_extension_framework"

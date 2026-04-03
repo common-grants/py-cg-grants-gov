@@ -47,11 +47,10 @@ plugins = load_plugins()
 To use the plugin directly:
 
 ```python
-from plugin import custom_fields
+from cg_extension_framework import schemas
 
-# Access the plugin's extensions and schemas
-extensions = custom_fields.extensions
-schemas = custom_fields.schemas
+# Access the extended Opportunity model
+Opportunity = schemas.Opportunity
 ```
 
 ## Development
