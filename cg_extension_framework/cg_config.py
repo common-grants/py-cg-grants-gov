@@ -8,7 +8,7 @@ from common_grants_sdk import define_plugin
 from common_grants_sdk.extensions import CustomFieldSpec, SchemaExtensions
 from common_grants_sdk.schemas.pydantic.fields.custom import CustomFieldType
 
-# Extensions that might come from a shared HHS package
+# Extensions that enhance the Opportunity object
 extensions: SchemaExtensions = {
     "Opportunity": {
         "legacySerialId": CustomFieldSpec(
