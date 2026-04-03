@@ -1,5 +1,4 @@
-""" Pydantic schemas that will be exported as part of a plugin."""
-
+"""Pydantic schemas that will be exported as part of a plugin."""
 
 from __future__ import annotations
 
