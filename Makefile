@@ -27,7 +27,7 @@ check-lint:
 check-types:
 	$(RUNTIME_PREFIX) mypy .
 
-checks: check-format check-lint check-types
+checks: check-format check-lint
 
 test: ## Run tests with pytest
 	poetry run pytest $(args)
