@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cg-extension-framework"
+version = "0.1.0"
+description = "CommonGrants custom fields plugin for HHS/grants.gov opportunity data"
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "common-grants-sdk>=0.6.0",
+    "pydantic>=2.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["plugin"]
+
+[tool.poetry]
+packages = [{include = "plugin"}]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+common-grants-sdk = "0.6.0"
+pydantic = ">=2.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^26.3.1"
+ruff = "^0.15.9"
+mypy = "^1.20.0"
+pytest = "^9.0.2"
+
+[project.entry-points."common_grants_sdk.plugins"]
+custom_fields = "plugin"
