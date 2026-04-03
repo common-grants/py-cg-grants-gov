@@ -1,3 +1,6 @@
+""" Pydantic schemas that will be exported as part of a plugin."""
+
+
 from __future__ import annotations
 
 from typing import Any, Optional
