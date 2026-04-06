@@ -3,7 +3,7 @@ name: "CI - Plugin: Run Checks"
 on:
   pull_request:
     paths:
-      - "plugin/**"
+      - "cg_grants_gov/**"
       - "pyproject.toml"
       - "poetry.lock"
       - ".github/workflows/ci-plugin.yml"

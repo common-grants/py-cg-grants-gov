@@ -4,7 +4,7 @@
   "packages": {
     ".": {
       "release-type": "python",
-      "package-name": "cg-extension-framework",
+      "package-name": "cg-grants-gov",
       "version-file": "pyproject.toml"
     }
   }
