@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "cg-extension-framework"
 version = "0.1.0"
-description = "CommonGrants custom fields plugin for HHS/grants.gov opportunity data"
+description = "CommonGrants custom fields plugin for HHS/simpler-grants-gov opportunity data"
 requires-python = ">=3.11,<4.0"
 dependencies = [
     "common-grants-sdk>=0.6.0",
