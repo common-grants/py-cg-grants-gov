@@ -14,8 +14,8 @@ from common_grants_sdk.schemas.pydantic.fields.custom import CustomFieldType
 
 
 class AssistanceListingValue(BaseModel):
-    identifier: str
-    programTitle: str
+    identifier: str | None = None
+    programTitle: str | None = None
 
 
 class AgencyValue(BaseModel):
