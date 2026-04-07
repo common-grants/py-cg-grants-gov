@@ -1,6 +1,6 @@
 # cg-grants-gov
 
-A [CommonGrants SDK](https://github.com/HHS/simpler-grants-gov) plugin that extends the `Opportunity` model with custom fields for HHS/grants.gov opportunity data.
+A [CommonGrants SDK](https://github.com/HHS/simpler-grants-protocol/tree/main/lib/python-sdk) plugin that extends the `Opportunity` model with custom fields for [HHS/simpler-grants-gov](https://github.com/HHS/simpler-grants-gov/) opportunity data.
 
 ## Overview
 
