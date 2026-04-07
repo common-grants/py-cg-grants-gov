@@ -53,14 +53,13 @@ Backwards-compatible bug fixes and non-functional changes:
 
 | Prefix | Use for |
 |---|---|
+| `feat:`| A new feature| 
 | `fix:` | A bug fix |
-| `perf:` | A performance improvement with no API change |
-| `refactor:` | Code restructuring with no behavior change |
 | `docs:` | Documentation only changes |
+| `refactor:` | Code restructuring with no behavior change |
 | `chore:` | Maintenance tasks (dependency updates, build config, etc.) |
-| `style:` | Formatting, whitespace, missing semicolons, etc. |
-| `test:` | Adding or updating tests |
 | `ci:` | CI/CD configuration changes |
+| `test:` | Adding or updating tests |
 
 #### Minor (`0.1.0` → `0.2.0`)
 
@@ -91,11 +90,62 @@ BREAKING CHANGE: `legacyId` has been renamed to `legacySerialId`
 
 1. **Merge changes to `main`** using conventional commit messages. Release Please tracks these commits to determine what the next version bump should be.
 
-2. **Trigger the release workflow** by navigating to **Actions → CD - Deploy Plugin to PyPI → Run workflow** in GitHub. This kicks off two jobs:
+2. **Wait for the release workflow** (`CD - Create Release`) to run automatically on push to `main`. This kicks off two jobs:
    - **`release-please`** — opens or updates a release PR that bumps the version in `pyproject.toml` and updates `CHANGELOG.md`. If the PR already exists, it appends any new commits to it. If a release PR was previously merged, this step creates a new GitHub release and tag.
-   - **`deploy`** — runs only when `release-please` creates a new release. It builds the package with `poetry build` and publishes it to PyPI using trusted publishing (OIDC — no API token required).
+   - **`publish`** — runs only when `release-please` creates a new release. It calls the `CD - Publish to PyPI` workflow, which builds the package with `poetry build` and publishes it to PyPI using trusted publishing (OIDC — no API token required).
+
+   You can also trigger the publish step manually by navigating to **Actions → CD - Publish to PyPI → Run workflow** and providing the tag to publish.
 
 3. **Merge the release PR** when you're ready to cut the release. This is the only manual step — merging the PR is what triggers the actual GitHub release and the subsequent PyPI publish on the next workflow run.
+
+### Retrying a failed publish
+
+If the publish step fails after a release is created:
+
+1. Go to **Actions → CD - Publish to PyPI**
+2. Click **Run workflow**
+3. Enter the git tag (e.g., `v0.2.0`)
+4. Click **Run workflow**
+
+If the failure requires a code fix (not just a CI retry):
+
+1. **Revert the release PR** — create a revert PR that undoes the version bump and changelog changes from the failed release. This ensures `main` reflects the unpublished state.
+
+   ```bash
+   # Find the merge commit of the release PR
+   git log --oneline main
+
+   # Create a revert branch
+   git checkout -b revert-release-v0.2.0 main
+   git revert --no-edit <merge-commit-sha>
+   git push -u origin revert-release-v0.2.0
+   ```
+
+2. **Merge the revert PR** to `main`.
+3. **Delete the unpublished GitHub Release and tag** — go to the repo's Releases page, delete the `v0.2.0` release, then delete the tag:
+
+   ```bash
+   git push origin --delete v0.2.0
+   ```
+
+4. **Merge your fix PR** to `main`.
+5. **Release-please will open a new release PR** for `v0.2.0` (same version, since the revert undid the previous bump) that includes both the original changes and your fix.
+6. **Merge the new release PR** to publish.
+
+### Previewing a release
+
+The release PR is the primary way to preview a release — it shows the exact changelog, version bump, and all included commits.
+
+### Bundling multiple changes
+
+The release PR accumulates all version-bumping commits since the last release. Keep merging PRs to `main` — the release PR updates automatically. Merge the release PR only when you're ready to cut a release.
+
+### Repository setup
+
+These settings are required for the release workflow to function correctly:
+
+- **Squash merge**: Enable squash merging as the default merge strategy with "Default to pull request title" so PR titles become the conventional commit messages on `main`
+- **GitHub Environment**: Create an environment called `pypi` with required reviewers to add an approval gate before publishing. This environment is already referenced in the `cd-publish.yml` workflow.
 
 ### Changelog
 
