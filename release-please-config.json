@@ -5,7 +5,20 @@
     ".": {
       "release-type": "python",
       "package-name": "cg-grants-gov",
-      "version-file": "pyproject.toml"
+      "version-file": "pyproject.toml",
+      "initial-version": "0.1.0"
     }
-  }
+  },
+  "bump-minor-pre-major": true,
+  "include-component-in-tag": false,
+
+  "changelog-sections": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "refactor", "section": "Refactoring" },
+    { "type": "chore", "section": "Miscellaneous", "hidden": true },
+    { "type": "ci", "section": "Miscellaneous", "hidden": true },
+    { "type": "test", "section": "Miscellaneous", "hidden": true }
+  ]
 }
