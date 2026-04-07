@@ -1,0 +1,43 @@
+name: "CI - Plugin: Run Checks"
+
+on:
+  pull_request:
+    paths:
+      - "cg_grants_gov/**"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - ".github/workflows/ci-plugin.yml"
+
+jobs:
+  lint-pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      #Checks that the commit message follows the conventional commits spec for release please
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: Gr1N/setup-poetry@v9
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Run checks
+        run: make checks
+
+      - name: Run tests
+        run: make test
+
+      - name: Build package
+        run: make build
