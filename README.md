@@ -20,16 +20,32 @@ poetry add cg-grants-gov
 
 ## Usage
 
-The plugin is auto-discovered by the CommonGrants SDK via its entry point. No manual registration is needed once the package is installed.
-
-
-To use the plugin directly:
+To parse a grants.gov opportunity using the plugin:
 
 ```python
-from cg_grants_gov import schemas
+from cg_grants_gov import grants_gov
 
-# Access the extended Opportunity model
-Opportunity = schemas.Opportunity
+opp_raw = {
+    "id": "573525f2-8e15-4405-83fb-e6523511d893",
+    "title": "STEM Education Grant Program",
+    "status": {"value": "open"},
+    "createdAt": "2025-01-01T00:00:00Z",
+    "lastModifiedAt": "2025-01-15T00:00:00Z",
+    "customFields": {
+        "agency": {
+            "name": "agency",
+            "fieldType": "object",
+            "value": {"code": "HHS", "name": "Department of Health and Human Services"},
+        },
+        "fiscalYear": {"name": "fiscalYear", "fieldType": "integer", "value": 2025},
+    },
+}
+
+opp = grants_gov.schemas.Opportunity.model_validate(opp_raw)
+
+print(opp.title)                              # "STEM Education Grant Program"
+print(opp.custom_fields.agency.value.name)    # "Department of Health and Human Services"
+print(opp.custom_fields.fiscal_year.value)    # 2025
 ```
 
 ## Development

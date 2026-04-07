@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 from pydantic import ConfigDict, Field
 
 from common_grants_sdk.schemas.pydantic.base import CommonGrantsBaseModel
 from common_grants_sdk.schemas.pydantic.fields import CustomField, CustomFieldType
 from common_grants_sdk.schemas.pydantic.models import OpportunityBase
+
+from cg_grants_gov.cg_config import (
+    AdditionalInfoValue,
+    AgencyValue,
+    AssistanceListingValue,
+    AttachmentValue,
+    ContactInfoValue,
+    CostSharingValue,
+)
 
 
 class OpportunityLegacySerialIdCustomField(CustomField):
@@ -47,7 +56,7 @@ class OpportunityAssistanceListingsCustomField(CustomField):
     description: Optional[str] = Field(
         default="The assistance listing number and program title for this opportunity"
     )
-    value: Optional[list[str]] = None
+    value: Optional[list[AssistanceListingValue]] = None
 
 
 class OpportunityAgencyCustomField(CustomField):
@@ -60,7 +69,7 @@ class OpportunityAgencyCustomField(CustomField):
     description: Optional[str] = Field(
         default="Information about the agency offering this opportunity"
     )
-    value: Optional[dict[str, Any]] = None
+    value: Optional[AgencyValue] = None
 
 
 class OpportunityAttachmentsCustomField(CustomField):
@@ -73,7 +82,7 @@ class OpportunityAttachmentsCustomField(CustomField):
     description: Optional[str] = Field(
         default="Attachments such as NOFOs and supplemental documents for the opportunity"
     )
-    value: Optional[list[str]] = None
+    value: Optional[list[AttachmentValue]] = None
 
 
 class OpportunityFederalFundingSourceCustomField(CustomField):
@@ -99,7 +108,7 @@ class OpportunityContactInfoCustomField(CustomField):
     description: Optional[str] = Field(
         default="Contact information (name, email, phone, description) for this resource"
     )
-    value: Optional[dict[str, Any]] = None
+    value: Optional[ContactInfoValue] = None
 
 
 class OpportunityAdditionalInfoCustomField(CustomField):
@@ -112,7 +121,7 @@ class OpportunityAdditionalInfoCustomField(CustomField):
     description: Optional[str] = Field(
         default="URL and description for additional information about the opportunity"
     )
-    value: Optional[dict[str, Any]] = None
+    value: Optional[AdditionalInfoValue] = None
 
 
 class OpportunityFiscalYearCustomField(CustomField):
@@ -138,7 +147,7 @@ class OpportunityCostSharingCustomField(CustomField):
     description: Optional[str] = Field(
         default="Whether cost sharing or matching funds are required for this opportunity"
     )
-    value: Optional[dict[str, Any]] = None
+    value: Optional[CostSharingValue] = None
 
 
 class OpportunityCustomFields(CommonGrantsBaseModel):
