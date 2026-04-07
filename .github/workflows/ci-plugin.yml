@@ -36,8 +36,8 @@ jobs:
       - name: Run checks
         run: make checks
 
-       - name: Run tests
-         run: make test
+      - name: Run tests
+        run: make test
 
       - name: Build package
         run: make build
