@@ -36,8 +36,9 @@ jobs:
       - name: Install Poetry
         uses: Gr1N/setup-poetry@v9
 
-      - name: Build package
-        run: poetry build
-
       - name: Publish to PyPI
-        run: poetry publish --username __token__ --password ${{ secrets.PYPI_API_TOKEN }}
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          poetry build
+          poetry publish
