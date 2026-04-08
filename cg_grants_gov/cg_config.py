@@ -19,7 +19,7 @@ class AssistanceListingValue(BaseModel):
 
 
 class AgencyValue(BaseModel):
-    code: str | None = None
+    code: str
     name: str | None = None
     parentName: str | None = None
     parentCode: str | None = None

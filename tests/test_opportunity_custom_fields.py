@@ -173,29 +173,6 @@ class TestMissingData:
 
         assert result.custom_fields.contact_info.value.name is None
 
-    def test_accepts_none_for_agency_code(self):
-        result = schema.model_validate(
-            {
-                **base_opportunity,
-                "customFields": {
-                    "agency": {
-                        "name": "agency",
-                        "fieldType": "object",
-                        "value": {
-                            "code": None,
-                            "name": "Department of Health and Human Services",
-                        },
-                    }
-                },
-            }
-        )
-
-        assert result.custom_fields.agency.value.code is None
-        assert (
-            result.custom_fields.agency.value.name
-            == "Department of Health and Human Services"
-        )
-
     def test_accepts_nullish_values_in_assistance_listing_fields(self):
         result = schema.model_validate(
             {
@@ -249,7 +226,7 @@ class TestInvalidData:
             assert error["type"] == "missing"
             assert error["msg"] == "Field required"
 
-    def test_rejects_agency_code_with_wrong_type(self):
+    def test_rejects_agency_with_wrong_type_for_required_field(self):
         with pytest.raises(ValidationError) as exc_info:
             schema.model_validate(
                 {
