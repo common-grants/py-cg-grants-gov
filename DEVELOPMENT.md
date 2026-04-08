@@ -57,9 +57,6 @@ Backwards-compatible bug fixes and non-functional changes:
 | `fix:` | A bug fix |
 | `docs:` | Documentation only changes |
 | `refactor:` | Code restructuring with no behavior change |
-| `chore:` | Maintenance tasks (dependency updates, build config, etc.) |
-| `ci:` | CI/CD configuration changes |
-| `test:` | Adding or updating tests |
 
 #### Minor (`0.1.0` → `0.2.0`)
 
