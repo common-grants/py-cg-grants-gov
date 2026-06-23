@@ -104,9 +104,7 @@ valid_custom_fields = {
 
 class TestExpectedData:
     def test_parses_opportunity_with_all_custom_fields(self):
-        result = schema.parse(
-            {**base_opportunity, "customFields": valid_custom_fields}
-        )
+        result = schema.parse({**base_opportunity, "customFields": valid_custom_fields})
 
         assert result.title == "STEM Education Grant Program"
         assert result.custom_fields.agency.value.code == "HHS"
@@ -541,13 +539,7 @@ FORECAST_FIXTURE = {
 
 
 class TestFieldRoundTrip:
-    """Validates every field from GET /v1/opportunities/:id survives to_common → from_common.
-
-    Known losses (intentionally not preserved):
-      - `agency`: deprecated field, always emitted as None by from_common
-      - `summary.created_at` / `summary.updated_at`: overwritten with top-level timestamps
-      - Competition fields beyond id/title: deferred to a future SDK update
-    """
+    """Validates every field from GET /v1/opportunities/:id survives to_common → from_common."""
 
     def _roundtrip(self, fixture):
         opp_schema = grants_gov.schemas.Opportunity
@@ -585,21 +577,45 @@ class TestFieldRoundTrip:
         assert s.is_cost_sharing == FULL_FIXTURE["summary"]["is_cost_sharing"]
         assert s.is_forecast == FULL_FIXTURE["summary"]["is_forecast"]
         assert str(s.close_date) == FULL_FIXTURE["summary"]["close_date"]
-        assert s.close_date_description == FULL_FIXTURE["summary"]["close_date_description"]
+        assert (
+            s.close_date_description
+            == FULL_FIXTURE["summary"]["close_date_description"]
+        )
         assert str(s.post_date) == FULL_FIXTURE["summary"]["post_date"]
         assert str(s.archive_date) == FULL_FIXTURE["summary"]["archive_date"]
-        assert s.expected_number_of_awards == FULL_FIXTURE["summary"]["expected_number_of_awards"]
-        assert s.estimated_total_program_funding == FULL_FIXTURE["summary"]["estimated_total_program_funding"]
+        assert (
+            s.expected_number_of_awards
+            == FULL_FIXTURE["summary"]["expected_number_of_awards"]
+        )
+        assert (
+            s.estimated_total_program_funding
+            == FULL_FIXTURE["summary"]["estimated_total_program_funding"]
+        )
         assert s.award_floor == FULL_FIXTURE["summary"]["award_floor"]
         assert s.award_ceiling == FULL_FIXTURE["summary"]["award_ceiling"]
         assert s.additional_info_url == FULL_FIXTURE["summary"]["additional_info_url"]
-        assert s.additional_info_url_description == FULL_FIXTURE["summary"]["additional_info_url_description"]
+        assert (
+            s.additional_info_url_description
+            == FULL_FIXTURE["summary"]["additional_info_url_description"]
+        )
         assert s.fiscal_year == FULL_FIXTURE["summary"]["fiscal_year"]
-        assert s.funding_category_description == FULL_FIXTURE["summary"]["funding_category_description"]
-        assert s.applicant_eligibility_description == FULL_FIXTURE["summary"]["applicant_eligibility_description"]
-        assert s.agency_contact_description == FULL_FIXTURE["summary"]["agency_contact_description"]
+        assert (
+            s.funding_category_description
+            == FULL_FIXTURE["summary"]["funding_category_description"]
+        )
+        assert (
+            s.applicant_eligibility_description
+            == FULL_FIXTURE["summary"]["applicant_eligibility_description"]
+        )
+        assert (
+            s.agency_contact_description
+            == FULL_FIXTURE["summary"]["agency_contact_description"]
+        )
         assert s.agency_email_address == FULL_FIXTURE["summary"]["agency_email_address"]
-        assert s.agency_email_address_description == FULL_FIXTURE["summary"]["agency_email_address_description"]
+        assert (
+            s.agency_email_address_description
+            == FULL_FIXTURE["summary"]["agency_email_address_description"]
+        )
         assert s.version_number == FULL_FIXTURE["summary"]["version_number"]
         assert s.funding_instruments == FULL_FIXTURE["summary"]["funding_instruments"]
         assert s.funding_categories == FULL_FIXTURE["summary"]["funding_categories"]
@@ -612,7 +628,9 @@ class TestFieldRoundTrip:
         assert a.mime_type == "application/pdf"
         assert a.file_name == "NOFO.pdf"
         assert a.file_description == "Notice of Funding Opportunity"
-        assert str(a.opportunity_attachment_id) == "a1b2c3d4-0000-0000-0000-000000000001"
+        assert (
+            str(a.opportunity_attachment_id) == "a1b2c3d4-0000-0000-0000-000000000001"
+        )
         assert a.download_path == "https://example.com/nofo.pdf"
         assert a.file_size_bytes == 102400
         assert str(a.created_at.date()) == "2025-01-01"
@@ -630,14 +648,32 @@ class TestFieldRoundTrip:
         src = self._roundtrip(FORECAST_FIXTURE)
         s = src.summary
         assert s.is_forecast is True
-        assert str(s.forecasted_post_date) == FORECAST_FIXTURE["summary"]["forecasted_post_date"]
-        assert str(s.forecasted_close_date) == FORECAST_FIXTURE["summary"]["forecasted_close_date"]
-        assert s.forecasted_close_date_description == FORECAST_FIXTURE["summary"]["forecasted_close_date_description"]
-        assert str(s.forecasted_award_date) == FORECAST_FIXTURE["summary"]["forecasted_award_date"]
-        assert str(s.forecasted_project_start_date) == FORECAST_FIXTURE["summary"]["forecasted_project_start_date"]
+        assert (
+            str(s.forecasted_post_date)
+            == FORECAST_FIXTURE["summary"]["forecasted_post_date"]
+        )
+        assert (
+            str(s.forecasted_close_date)
+            == FORECAST_FIXTURE["summary"]["forecasted_close_date"]
+        )
+        assert (
+            s.forecasted_close_date_description
+            == FORECAST_FIXTURE["summary"]["forecasted_close_date_description"]
+        )
+        assert (
+            str(s.forecasted_award_date)
+            == FORECAST_FIXTURE["summary"]["forecasted_award_date"]
+        )
+        assert (
+            str(s.forecasted_project_start_date)
+            == FORECAST_FIXTURE["summary"]["forecasted_project_start_date"]
+        )
 
-    def test_known_losses_documented(self):
-        """Fields intentionally not preserved — documents the known round-trip gaps."""
+    def test_agency_preserved_when_set(self):
+        fixture = {**FULL_FIXTURE, "agency": "DOI-BOR-MP"}
+        src = self._roundtrip(fixture)
+        assert src.agency == "DOI-BOR-MP"
+
+    def test_agency_none_when_not_set(self):
         src = self._roundtrip(FULL_FIXTURE)
-        # `agency` is deprecated; from_common always emits None
         assert src.agency is None

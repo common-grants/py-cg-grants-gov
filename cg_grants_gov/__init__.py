@@ -3,6 +3,7 @@
 Maps GET /v1/opportunities/:id (OpportunityWithAttachmentsV1Schema)
 to and from the CommonGrants OpportunityBase format.
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -98,6 +99,9 @@ class OpportunityFields(CustomFieldSet):
     legacy_serial_id: Optional[CustomField[int]] = Field(
         default=None, description="Integer ID for legacy system compatibility"
     )
+    legacy_agency_code: Optional[CustomField[str]] = Field(
+        default=None, description="Deprecated top-level agency code string"
+    )
     federal_opportunity_number: Optional[CustomField[str]] = Field(
         default=None, description="Federal opportunity number"
     )
@@ -148,6 +152,13 @@ class OpportunityFields(CustomFieldSet):
     )
     agency_email_address_description: Optional[CustomField[str]] = Field(
         default=None, description="Link text for the agency email address"
+    )
+    summary_created_at: Optional[CustomField[str]] = Field(
+        default=None, description="Timestamp when the opportunity summary was created"
+    )
+    summary_updated_at: Optional[CustomField[str]] = Field(
+        default=None,
+        description="Timestamp when the opportunity summary was last updated",
     )
 
 
@@ -216,7 +227,9 @@ class GrantsGovOpportunitySchema(BaseModel):
     legacy_opportunity_id: Optional[int] = None
     opportunity_number: Optional[str] = None
     opportunity_title: Optional[str] = None
-    agency: Optional[str] = None  # deprecated — parsed but not mapped in to_common
+    agency: Optional[str] = (
+        None  # deprecated top-level code; preserved via legacyAgencyCode custom field
+    )
     agency_code: Optional[str] = None
     agency_name: Optional[str] = None
     top_level_agency_name: Optional[str] = None
@@ -407,6 +420,10 @@ def to_common(
         custom_fields["legacySerialId"] = _cf(
             "legacySerialId", "integer", native.legacy_opportunity_id
         )
+    if native.agency is not None:
+        custom_fields["legacyAgencyCode"] = _cf(
+            "legacyAgencyCode", "string", native.agency
+        )
     if native.opportunity_number is not None:
         custom_fields["federalOpportunityNumber"] = _cf(
             "federalOpportunityNumber", "string", native.opportunity_number
@@ -433,13 +450,17 @@ def to_common(
             "parentCode": native.top_level_agency_code,
         },
     )
-    if native.attachments:
+    if native.attachments is not None:
         custom_fields["attachments"] = _cf(
             "attachments",
             "array",
             [
                 {
-                    "opportunityAttachmentId": str(a.opportunity_attachment_id) if a.opportunity_attachment_id else None,
+                    "opportunityAttachmentId": (
+                        str(a.opportunity_attachment_id)
+                        if a.opportunity_attachment_id
+                        else None
+                    ),
                     "downloadUrl": a.download_path,
                     "name": a.file_name or "",
                     "description": a.file_description,
@@ -520,11 +541,17 @@ def to_common(
                 "string",
                 summary.agency_email_address_description,
             )
+        custom_fields["summaryCreatedAt"] = _cf(
+            "summaryCreatedAt", "string", summary.created_at.isoformat()
+        )
+        custom_fields["summaryUpdatedAt"] = _cf(
+            "summaryUpdatedAt", "string", summary.updated_at.isoformat()
+        )
     if native.category_explanation is not None:
         custom_fields["categoryExplanation"] = _cf(
             "categoryExplanation", "string", native.category_explanation
         )
-    if native.competitions:
+    if native.competitions is not None:
         custom_fields["competitions"] = _cf(
             "competitions",
             "array",
@@ -683,8 +710,16 @@ def from_common(
             )
             for at in (common.accepted_applicant_types or [])
         ],
-        "created_at": common.created_at.isoformat(),
-        "updated_at": common.last_modified_at.isoformat(),
+        "created_at": (
+            cf.summary_created_at.value
+            if cf and cf.summary_created_at
+            else common.created_at.isoformat()
+        ),
+        "updated_at": (
+            cf.summary_updated_at.value
+            if cf and cf.summary_updated_at
+            else common.last_modified_at.isoformat()
+        ),
     }
 
     payload: dict = {
@@ -698,7 +733,7 @@ def from_common(
             if cf and cf.federal_opportunity_number
             else None
         ),
-        "agency": None,
+        "agency": cf.legacy_agency_code.value if cf and cf.legacy_agency_code else None,
         "agency_code": cf.agency.value.code if cf and cf.agency else None,
         "agency_name": cf.agency.value.name if cf and cf.agency else None,
         "top_level_agency_name": (
@@ -708,7 +743,9 @@ def from_common(
             cf.agency.value.parentCode if cf and cf.agency else None
         ),
         "category": (
-            cf.federal_funding_source.value if cf and cf.federal_funding_source else None
+            cf.federal_funding_source.value
+            if cf and cf.federal_funding_source
+            else None
         ),
         "category_explanation": (
             cf.category_explanation.value if cf and cf.category_explanation else None
@@ -726,7 +763,11 @@ def from_common(
         "attachments": (
             [
                 {
-                    "opportunity_attachment_id": str(a.opportunityAttachmentId) if a.opportunityAttachmentId else None,
+                    "opportunity_attachment_id": (
+                        str(a.opportunityAttachmentId)
+                        if a.opportunityAttachmentId
+                        else None
+                    ),
                     "mime_type": a.mimeType,
                     "file_name": a.name,
                     "file_description": a.description,
@@ -735,9 +776,10 @@ def from_common(
                     "created_at": a.createdAt.isoformat(),
                     "updated_at": a.lastModifiedAt.isoformat(),
                 }
-                for a in (cf.attachments.value if cf and cf.attachments else [])
+                for a in cf.attachments.value
             ]
-            or None
+            if cf and cf.attachments is not None
+            else None
         ),
         "competitions": (
             [
@@ -746,9 +788,10 @@ def from_common(
                     "opportunity_id": str(comp.opportunityId),
                     "competition_title": comp.competitionTitle,
                 }
-                for comp in (cf.competitions.value if cf and cf.competitions else [])
+                for comp in cf.competitions.value
             ]
-            or None
+            if cf and cf.competitions is not None
+            else None
         ),
         "created_at": common.created_at.isoformat(),
         "updated_at": common.last_modified_at.isoformat(),
