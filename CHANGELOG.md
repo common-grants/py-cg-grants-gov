@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/common-grants/py-cg-grants-gov/compare/v0.1.0...v0.2.0) (2026-06-25)
+
+
+### Features
+
+* 813 expand transform ([#8](https://github.com/common-grants/py-cg-grants-gov/issues/8)) ([a68a7b3](https://github.com/common-grants/py-cg-grants-gov/commit/a68a7b337796daa1b2c71f4a9908ffd2dbccaf92))
+
 ## 0.1.0 (2026-04-08)
 
 
