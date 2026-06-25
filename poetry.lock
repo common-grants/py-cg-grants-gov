@@ -124,18 +124,18 @@ files = [
 
 [[package]]
 name = "common-grants-sdk"
-version = "0.6.0"
+version = "0.7.0"
 description = "Python SDK for the CommonGrants protocol"
 optional = false
 python-versions = "<4.0,>=3.11"
 groups = ["main"]
 files = [
-    {file = "common_grants_sdk-0.6.0-py3-none-any.whl", hash = "sha256:7b64b6628040e39807e3febb0bf3c73861bfdb20ef66b77743f8052890038b01"},
-    {file = "common_grants_sdk-0.6.0.tar.gz", hash = "sha256:b2d190439065b81b2bceb3626333fde5e8a1ab8bc0560fecf1273319fe3b6df0"},
+    {file = "common_grants_sdk-0.7.0-py3-none-any.whl", hash = "sha256:26852c8f560302379b286c944c0b973658262660c9996c628b4556665ecef718"},
+    {file = "common_grants_sdk-0.7.0.tar.gz", hash = "sha256:31695f0a41d54aedb7b883c2ef711de8d8e1c3a486f03511c72ea234432dad58"},
 ]
 
 [package.dependencies]
-httpx = ">=0.27.0,<0.28.0"
+httpx = ">=0.27,<0.29"
 marshmallow = ">=3.20.0,<4.0.0"
 pydantic = ">=2.11.0,<3.0.0"
 
@@ -803,4 +803,4 @@ typing-extensions = ">=4.12.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "d20398a035d0092b97367878e2c43b5f444cadde9af4bfb6047d117b19205dec"
+content-hash = "204e550628600893b965208b81b85c2318844856e40c9addd3ce65a5088f9518"

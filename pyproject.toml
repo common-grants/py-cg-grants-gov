@@ -10,7 +10,7 @@ packages = [{include = "cg_grants_gov"}]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
-common-grants-sdk = ">=0.6.0"
+common-grants-sdk = ">=0.7.0"
 pydantic = ">=2.0"
 
 [tool.poetry.group.dev.dependencies]
