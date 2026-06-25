@@ -677,3 +677,51 @@ class TestFieldRoundTrip:
     def test_agency_none_when_not_set(self):
         src = self._roundtrip(FULL_FIXTURE)
         assert src.agency is None
+
+    def test_empty_attachments_roundtrip(self):
+        """Empty attachments list [] must survive round-trip as [] not None."""
+        fixture = {**FULL_FIXTURE, "attachments": []}
+        src = self._roundtrip(fixture)
+        assert src.attachments == []
+
+    def test_empty_competitions_roundtrip(self):
+        """Empty competitions list [] must survive round-trip as [] not None."""
+        fixture = {**FULL_FIXTURE, "competitions": []}
+        src = self._roundtrip(fixture)
+        assert src.competitions == []
+
+    def test_absent_attachments_is_none(self):
+        """Absent attachments key must round-trip back to None."""
+        fixture = {k: v for k, v in FULL_FIXTURE.items() if k != "attachments"}
+        src = self._roundtrip(fixture)
+        assert src.attachments is None
+
+    def test_absent_competitions_is_none(self):
+        """Absent competitions key must round-trip back to None."""
+        fixture = {k: v for k, v in FULL_FIXTURE.items() if k != "competitions"}
+        src = self._roundtrip(fixture)
+        assert src.competitions is None
+
+    def test_summary_timestamps_preserved_separately(self):
+        """Summary created_at/updated_at must be stored and restored independently
+        from the top-level opportunity timestamps.
+
+        The base fixtures share the same timestamps for both levels, so a bug that
+        falls back to the top-level values would appear correct. This fixture uses
+        deliberately different summary timestamps to catch that regression.
+        """
+        fixture = {
+            **FULL_FIXTURE,
+            "created_at": "2025-01-01T00:00:00Z",
+            "updated_at": "2025-01-15T00:00:00Z",
+            "summary": {
+                **FULL_FIXTURE["summary"],
+                "created_at": "2024-06-01T00:00:00Z",
+                "updated_at": "2024-12-01T00:00:00Z",
+            },
+        }
+        src = self._roundtrip(fixture)
+        assert src.summary.created_at.year == 2024
+        assert src.summary.created_at.month == 6
+        assert src.summary.updated_at.year == 2024
+        assert src.summary.updated_at.month == 12
