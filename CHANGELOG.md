@@ -3,6 +3,15 @@
 ## [0.2.0](https://github.com/common-grants/py-cg-grants-gov/compare/v0.1.0...v0.2.0) (2026-06-25)
 
 
+### ⚠ BREAKING CHANGES
+
+* `cg_grants_gov.generated` module removed — `from cg_grants_gov.generated import schemas` no longer works
+* `cg_grants_gov.cg_config` module removed — all imports from `cg_grants_gov.cg_config` no longer work
+* `schemas` removed from package public API — `grants_gov.schemas.Opportunity` is no longer accessible
+* The `Opportunity` model (which extended `OpportunityBase` with `OpportunityCustomFields`) is replaced by `OpportunityBase[OpportunityFields]`
+* Plugin instantiation changed from `Plugin(extensions=..., schemas=...)` to `define_plugin(PluginSchemas(...), meta=PluginMeta(...))`
+
+
 ### Features
 
 * 813 expand transform ([#8](https://github.com/common-grants/py-cg-grants-gov/issues/8)) ([a68a7b3](https://github.com/common-grants/py-cg-grants-gov/commit/a68a7b337796daa1b2c71f4a9908ffd2dbccaf92))
