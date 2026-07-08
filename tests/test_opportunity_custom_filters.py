@@ -8,7 +8,9 @@ agency / applicantType / fundingInstrument / costSharing.
 
 from typing import get_type_hints
 
-from common_grants_sdk.extensions import classify_filters, f
+import pytest
+
+from common_grants_sdk.extensions import FilterError, classify_filters, f
 
 from cg_grants_gov import grants_gov
 
@@ -23,13 +25,13 @@ def test_registers_sgg_custom_filters_on_opportunities_search():
 
 def test_registered_filter_type_is_validated():
     # costSharing is registered as a BooleanComparison. Passing an array-operator
-    # value must be caught fail-soft (collected on .errors, dropped from result).
-    # An UNREGISTERED (ad-hoc) key passes silently, so this only holds because the
-    # filter is actually registered and typed — the value the plugin adds.
-    result = classify_filters(
-        grants_gov.routes,
-        "opportunities",
-        "search",
-        {"costSharing": f.in_(["not-a-bool"])},
-    )
-    assert result.errors, "expected a FilterError for a wrong-typed registered filter"
+    # value is rejected fail-fast: classify_filters raises FilterError before any
+    # request. An UNREGISTERED (ad-hoc) key passes silently, so this only holds
+    # because the filter is actually registered and typed — the value the plugin adds.
+    with pytest.raises(FilterError):
+        classify_filters(
+            grants_gov.routes,
+            "opportunities",
+            "search",
+            {"costSharing": f.in_(["not-a-bool"])},
+        )
