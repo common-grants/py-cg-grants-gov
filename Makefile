@@ -2,7 +2,7 @@
 
 RUNTIME_PREFIX := poetry run
 
-.PHONY: help install build clean lint format test
+.PHONY: help install build clean lint format test check-format check-lint check-types checks
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -25,9 +25,9 @@ check-lint:
 	$(RUNTIME_PREFIX) ruff check .
 
 check-types:
-	$(RUNTIME_PREFIX) mypy .
+	$(RUNTIME_PREFIX) pyright
 
-checks: check-format check-lint
+checks: check-format check-lint check-types
 
 test: ## Run tests with pytest
 	poetry run pytest $(args)
