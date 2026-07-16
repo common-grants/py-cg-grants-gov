@@ -13,8 +13,8 @@ registered routes are baked in: ``search(filters=...)`` validates each value
 against its declared filter model and, for wrong-typed values, raises
 ``FilterError`` fail-fast before any request is sent.
 
-At runtime the server also echoes back the ``filter_info`` it applied, so you
-can confirm the custom filters reached the wire and the live API accepts them.
+At runtime the result reports the classified filters sent on the wire, so you
+can confirm the custom filters were included and the live API accepted them.
 
 Run with:
 
@@ -67,7 +67,7 @@ Opportunity = OpportunityBase[OpportunityFields]
 # The plugin binds its Opportunity schema and its registered routes/filters, so
 # search(filters=...) is validated and typed by the plugin's custom filters.
 client = grants_gov.get_client(
-    Config(base_url=BASE_URL, page_size=5),
+    Config(base_url=BASE_URL, api_key=API_KEY, page_size=5),
     Auth.api_key(API_KEY),
 )
 
@@ -97,7 +97,7 @@ def log_opportunity(opp: Opportunity) -> None:
     print(f"    assistanceListings: {len(listings) if listings else 0}")
 
 
-def run(label: str, search: Callable[[], SearchResult[Opportunity]]) -> None:
+def run(label: str, search: Callable[[], SearchResult[Opportunity]]) -> bool:
     """Run one search and print the outcome. Each scenario is isolated: a
     ``FilterError`` (bad local value) or an HTTP error is caught here so the
     remaining scenarios still run."""
@@ -108,29 +108,30 @@ def run(label: str, search: Callable[[], SearchResult[Opportunity]]) -> None:
         print(f"  total matches:           {total}")
         print(f"  items returned (page 1): {len(result.items)}")
         print(f"  per-row parse failures:  {len(result.errors)}")
-        # The server echoes the filters it applied; confirms the custom filters
-        # reached the wire and were understood by the live API.
-        echoed = result.filter_info.filters.model_dump(by_alias=True, exclude_none=True)
-        print(f"  filterInfo echoed by API: {echoed}")
+        print(f"  filters sent:             {result.filter_info.filters}")
         if result.items:
             log_opportunity(result.items[0])
+        return True
     except FilterError as e:
         print(f"  FilterError: {e}")
+        return False
     except Exception as e:  # noqa: BLE001 - example: surface any API/network error
         print(f"  ERROR: {e}")
+        return False
 
 
-def main() -> None:
+def main() -> int:
     print(f"Base URL: {BASE_URL}")
     search = grants_gov.routes.opportunities.search
     registered = [k for k in (search.__annotations__ if search else {})]
     print(f"Registered custom filters: {', '.join(registered)}")
+    ok = True
 
     # Baseline: no custom filters, just open opportunities. `status` is a default
     # filter; pass it through `filters` — the old `status=` shorthand is deprecated.
     # `run` logs the first result's custom fields, confirming the plugin parsed
     # them out of the live response.
-    run(
+    ok &= run(
         "Baseline (open opportunities, no custom filters)",
         lambda: client.opportunities.search(
             filters={"status": f.in_(["open"])}, page=1
@@ -140,13 +141,13 @@ def main() -> None:
     # Each registered custom filter, one at a time. Adjust the codes to ones the
     # live API recognizes; the point here is that the filter is registered,
     # validated, and accepted end to end.
-    run(
+    ok &= run(
         "agency (StringArray)",
         lambda: client.opportunities.search(
             filters={"status": f.in_(["open"]), "agency": f.in_(["NSF"])}, page=1
         ),
     )
-    run(
+    ok &= run(
         "applicantType (StringArray)",
         lambda: client.opportunities.search(
             filters={
@@ -156,14 +157,14 @@ def main() -> None:
             page=1,
         ),
     )
-    run(
+    ok &= run(
         "fundingInstrument (StringArray)",
         lambda: client.opportunities.search(
             filters={"status": f.in_(["open"]), "fundingInstrument": f.in_(["grant"])},
             page=1,
         ),
     )
-    run(
+    ok &= run(
         "costSharing (BooleanComparison)",
         lambda: client.opportunities.search(
             filters={"status": f.in_(["open"]), "costSharing": f.eq(False)}, page=1
@@ -171,7 +172,7 @@ def main() -> None:
     )
 
     # All four together, to confirm they compose in a single request.
-    run(
+    ok &= run(
         "all four filters combined",
         lambda: client.opportunities.search(
             filters={
@@ -185,8 +186,12 @@ def main() -> None:
         ),
     )
 
+    if not ok:
+        print("\n✗ search-with-filters example failed", file=sys.stderr)
+        return 1
     print("\n✓ search-with-filters example complete")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
