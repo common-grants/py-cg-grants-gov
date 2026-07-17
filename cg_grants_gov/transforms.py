@@ -61,32 +61,32 @@ def to_common(
         if summary.archive_date is not None:
             other_dates["archiveDate"] = SingleDateEvent(
                 name="Archive Date",
-                event_type=EventType.SINGLE_DATE,
+                eventType=EventType.SINGLE_DATE,
                 date=summary.archive_date,
             )
         if summary.forecasted_post_date is not None:
             other_dates["forecastedPostDate"] = SingleDateEvent(
                 name="Forecasted Post Date",
-                event_type=EventType.SINGLE_DATE,
+                eventType=EventType.SINGLE_DATE,
                 date=summary.forecasted_post_date,
             )
         if summary.forecasted_close_date is not None:
             other_dates["forecastedCloseDate"] = SingleDateEvent(
                 name="Forecasted Close Date",
-                event_type=EventType.SINGLE_DATE,
+                eventType=EventType.SINGLE_DATE,
                 date=summary.forecasted_close_date,
                 description=summary.forecasted_close_date_description,
             )
         if summary.forecasted_award_date is not None:
             other_dates["forecastedAwardDate"] = SingleDateEvent(
                 name="Forecasted Award Date",
-                event_type=EventType.SINGLE_DATE,
+                eventType=EventType.SINGLE_DATE,
                 date=summary.forecasted_award_date,
             )
         if summary.forecasted_project_start_date is not None:
             other_dates["forecastedProjectStartDate"] = SingleDateEvent(
                 name="Forecasted Project Start Date",
-                event_type=EventType.SINGLE_DATE,
+                eventType=EventType.SINGLE_DATE,
                 date=summary.forecasted_project_start_date,
             )
 
@@ -94,13 +94,13 @@ def to_common(
     if summary and summary.post_date is not None:
         key_dates["postDate"] = SingleDateEvent(
             name="Post Date",
-            event_type=EventType.SINGLE_DATE,
+            eventType=EventType.SINGLE_DATE,
             date=summary.post_date,
         )
     if summary and summary.close_date is not None:
         key_dates["closeDate"] = SingleDateEvent(
             name="Close Date",
-            event_type=EventType.SINGLE_DATE,
+            eventType=EventType.SINGLE_DATE,
             date=summary.close_date,
             description=summary.close_date_description,
         )
@@ -120,7 +120,7 @@ def to_common(
                 accepted_applicant_types.append(
                     ApplicantType(
                         value=ApplicantTypeOptions.custom,
-                        custom_value=raw,
+                        customValue=raw,
                     )
                 )
 
@@ -315,11 +315,16 @@ def from_common(
             return None
         return d.isoformat() if hasattr(d, "isoformat") else str(d)
 
+    def _event_date(event) -> Optional[str]:
+        # Only single-date events carry a .date; range/other events map to None.
+        if isinstance(event, SingleDateEvent):
+            return _date_str(event.date)
+        return None
+
     def _other_date(key: str) -> Optional[str]:
         if common.key_dates is None or common.key_dates.other_dates is None:
             return None
-        event = common.key_dates.other_dates.get(key)
-        return _date_str(event.date) if event else None
+        return _event_date(common.key_dates.other_dates.get(key))
 
     def _other_description(key: str) -> Optional[str]:
         if common.key_dates is None or common.key_dates.other_dates is None:
@@ -334,9 +339,7 @@ def from_common(
             cf.cost_sharing.value.isRequired if cf and cf.cost_sharing else None
         ),
         "close_date": (
-            _date_str(common.key_dates.close_date.date)
-            if common.key_dates and common.key_dates.close_date
-            else None
+            _event_date(common.key_dates.close_date) if common.key_dates else None
         ),
         "close_date_description": (
             common.key_dates.close_date.description
@@ -344,9 +347,7 @@ def from_common(
             else None
         ),
         "post_date": (
-            _date_str(common.key_dates.post_date.date)
-            if common.key_dates and common.key_dates.post_date
-            else None
+            _event_date(common.key_dates.post_date) if common.key_dates else None
         ),
         "archive_date": _other_date("archiveDate"),
         "forecasted_post_date": _other_date("forecastedPostDate"),

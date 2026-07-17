@@ -49,15 +49,20 @@ opp_raw = {
     },
 }
 
-opp = grants_gov.schemas.Opportunity.model_validate(opp_raw)
+opp = grants_gov.schemas.Opportunity.parse(opp_raw)
+
+# The sample payload above sets every custom field, so narrow the Optionals once.
+cf = opp.custom_fields
+assert cf and cf.agency and cf.assistance_listings and cf.contact_info
+assert cf.fiscal_year and cf.cost_sharing
 
 # Print the opportunity
 print("opp.id:", opp.id)
 print("  title:", opp.title)
 print("  description:", opp.description)
 print("  status:", opp.status.value)
-print("  agency:", opp.custom_fields.agency.value.name)
-print("  assistanceListings:", opp.custom_fields.assistance_listings.value)
-print("  contactInfo:", opp.custom_fields.contact_info.value.name)
-print("  fiscalYear:", opp.custom_fields.fiscal_year.value)
-print("  costSharing:", opp.custom_fields.cost_sharing.value.isRequired)
+print("  agency:", cf.agency.value.name)
+print("  assistanceListings:", cf.assistance_listings.value)
+print("  contactInfo:", cf.contact_info.value.name)
+print("  fiscalYear:", cf.fiscal_year.value)
+print("  costSharing:", cf.cost_sharing.value.isRequired)
