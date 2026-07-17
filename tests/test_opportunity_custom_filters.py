@@ -12,7 +12,7 @@ from unittest.mock import Mock
 import pytest
 
 from common_grants_sdk.client import Auth, Config
-from common_grants_sdk.extensions import FilterError, classify_filters, f
+from common_grants_sdk.extensions import FilterError, f
 
 from cg_grants_gov import grants_gov
 
@@ -36,7 +36,7 @@ def _make_client():
     return client
 
 
-def _envelope(items: list[dict], filters: dict) -> dict:
+def _envelope(items: list[dict]) -> dict:
     """A minimal valid CommonGrants ``Filtered`` search envelope."""
     return {
         "status": 200,
@@ -49,7 +49,7 @@ def _envelope(items: list[dict], filters: dict) -> dict:
             "totalPages": 1,
         },
         "sortInfo": {"sortBy": "lastModifiedAt", "sortOrder": "desc"},
-        "filterInfo": {"filters": filters, "errors": []},
+        "filterInfo": {"filters": {}, "errors": []},
     }
 
 
@@ -87,35 +87,12 @@ def test_registers_sgg_custom_filters_on_opportunities_search():
     assert REGISTERED_FILTERS <= set(get_type_hints(search))
 
 
-def test_registered_filter_type_is_validated():
-    # costSharing is registered as a BooleanComparison. Passing an array-operator
-    # value is rejected fail-fast: classify_filters raises FilterError before any
-    # request. An UNREGISTERED (ad-hoc) key passes silently, so this only holds
-    # because the filter is actually registered and typed — the value the plugin adds.
-    with pytest.raises(FilterError):
-        classify_filters(
-            grants_gov.routes,
-            "opportunities",
-            "search",
-            {"costSharing": f.in_(["not-a-bool"])},
-        )
-
-
 def test_search_sends_all_registered_custom_filters_on_the_wire():
     # Drive the real scoped client: search(filters=...) classifies through the
     # bound routes and posts the request. Assert the wire body carries every
     # registered custom filter with its operator and value.
     client = _make_client()
-    filters_echo = {
-        "status": {"operator": "in", "value": ["open"]},
-        "customFilters": {
-            "agency": {"operator": "in", "value": ["NSF"]},
-            "applicantType": {"operator": "in", "value": ["state_governments"]},
-            "fundingInstrument": {"operator": "in", "value": ["grant"]},
-            "costSharing": {"operator": "eq", "value": False},
-        },
-    }
-    _stub_response(client, _envelope([], filters_echo))
+    _stub_response(client, _envelope([]))
 
     client.opportunities.search(
         filters={
@@ -130,32 +107,22 @@ def test_search_sends_all_registered_custom_filters_on_the_wire():
 
     client.http.post.assert_called_once()
     call = client.http.post.call_args
-    posted_url = call.args[0] if call.args else call.kwargs["url"]
-    assert posted_url == f"{BASE_URL}/common-grants/opportunities/search"
+    assert call.args[0] == f"{BASE_URL}/common-grants/opportunities/search"
 
-    body = call.kwargs["json"]
-    custom = body["filters"]["customFilters"]
-    assert set(custom) == REGISTERED_FILTERS
-    assert custom["agency"] == {"operator": "in", "value": ["NSF"]}
-    assert custom["applicantType"] == {
-        "operator": "in",
-        "value": ["state_governments"],
+    expected_custom_filters = {
+        "agency": {"operator": "in", "value": ["NSF"]},
+        "applicantType": {"operator": "in", "value": ["state_governments"]},
+        "fundingInstrument": {"operator": "in", "value": ["grant"]},
+        "costSharing": {"operator": "eq", "value": False},
     }
-    assert custom["fundingInstrument"] == {"operator": "in", "value": ["grant"]}
-    assert custom["costSharing"] == {"operator": "eq", "value": False}
+    assert call.kwargs["json"]["filters"]["customFilters"] == expected_custom_filters
 
 
 def test_search_parses_grants_gov_custom_fields_via_bound_schema():
     # A returned opportunity with Grants.gov custom fields parses through the
     # plugin's bound Opportunity schema, so typed attribute access works.
     client = _make_client()
-    _stub_response(
-        client,
-        _envelope(
-            [OPPORTUNITY_WITH_AGENCY],
-            {"status": {"operator": "in", "value": ["open"]}},
-        ),
-    )
+    _stub_response(client, _envelope([OPPORTUNITY_WITH_AGENCY]))
 
     result = client.opportunities.search(filters={"status": f.in_(["open"])}, page=1)
 

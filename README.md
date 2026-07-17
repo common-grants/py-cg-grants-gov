@@ -189,23 +189,9 @@ The plugin is assembled in `cg_grants_gov/__init__.py` using these components:
 | `OppSearchFilters` | `OpportunityFilters` subclass declaring the custom search filters | `__init__.py` |
 
 `OppSearchFilters` extends the SDK's `OpportunityFilters` with the four custom
-filters, each annotated with its filter family so the SDK validates call-site
-values and recovers their type when classifying the request:
-
-```python
-from common_grants_sdk.schemas.pydantic.filters.opportunity import (
-    BooleanComparison,
-    OpportunityFilters,
-    StringArray,
-)
-
-
-class OppSearchFilters(OpportunityFilters, total=False):
-    agency: StringArray
-    applicantType: StringArray
-    fundingInstrument: StringArray
-    costSharing: BooleanComparison
-```
+filters documented under [Search with custom filters](#search-with-custom-filters),
+each annotated with its filter family so the SDK validates call-site values and
+recovers their type when classifying the request.
 
 The schema, transforms, and filter routes are wired together via `define_plugin`.
 Passing `OppSearchFilters` through `PluginRoutes` is what registers the custom
