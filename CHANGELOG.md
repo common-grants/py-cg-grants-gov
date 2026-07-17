@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/common-grants/py-cg-grants-gov/compare/v0.2.0...v0.3.0) (2026-07-17)
+
+
+### Features
+
+* register Simpler.Grants.gov custom filters on opportunities.search ([#11](https://github.com/common-grants/py-cg-grants-gov/issues/11)) ([1963935](https://github.com/common-grants/py-cg-grants-gov/commit/19639357e0be0779b562f13f1f20393ca3b699f0))
+
 ## [0.2.0](https://github.com/common-grants/py-cg-grants-gov/compare/v0.1.0...v0.2.0) (2026-06-25)
 
 
