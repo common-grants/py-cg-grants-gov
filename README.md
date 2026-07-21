@@ -86,14 +86,13 @@ A client from `grants_gov.get_client(...)` binds these filters, so
 raises `FilterError` fail-fast for a wrong-typed value before any request is sent:
 
 ```python
-from common_grants_sdk.client import Auth, Config
+from common_grants_sdk.client import Config
 from common_grants_sdk.extensions import f
 
 from cg_grants_gov import grants_gov
 
 client = grants_gov.get_client(
     Config(base_url="https://api.simpler.grants.gov", api_key="your-api-key"),
-    Auth.api_key("your-api-key"),
 )
 
 result = client.opportunities.search(
