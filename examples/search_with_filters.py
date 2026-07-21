@@ -32,7 +32,7 @@ import os
 import sys
 from collections.abc import Callable
 
-from common_grants_sdk.client import Auth, Config, SearchResult
+from common_grants_sdk.client import Config, SearchResult
 from common_grants_sdk.extensions import FilterError, f
 from common_grants_sdk.schemas.pydantic.models import OpportunityBase
 
@@ -68,7 +68,6 @@ Opportunity = OpportunityBase[OpportunityFields]
 # search(filters=...) is validated and typed by the plugin's custom filters.
 client = grants_gov.get_client(
     Config(base_url=BASE_URL, api_key=API_KEY, page_size=5),
-    Auth.api_key(API_KEY),
 )
 
 
