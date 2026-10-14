@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Optional
 
 from common_grants_sdk.extensions import TransformResult, validate_into
@@ -24,6 +25,24 @@ from .models import GrantsGovOpportunitySchema, OpportunityFields
 def _cf(name: str, field_type: str, value) -> dict:
     """Build a CustomField wire-format dict for the customFields payload."""
     return {"name": name, "fieldType": field_type, "value": value}
+
+
+def _close_date_event(
+    name: str, close_date: date, description: Optional[str]
+) -> SingleDateEvent:
+    """Build a close-date event, omitting a missing description.
+
+    Core optional properties may be omitted but never null, so a missing source
+    description is left off the event instead of being passed as None.
+    """
+    event: dict = {
+        "name": name,
+        "eventType": EventType.SINGLE_DATE,
+        "date": close_date,
+    }
+    if description is not None:
+        event["description"] = description
+    return SingleDateEvent.model_validate(event)
 
 
 def to_common(
@@ -71,11 +90,10 @@ def to_common(
                 date=summary.forecasted_post_date,
             )
         if summary.forecasted_close_date is not None:
-            other_dates["forecastedCloseDate"] = SingleDateEvent(
-                name="Forecasted Close Date",
-                eventType=EventType.SINGLE_DATE,
-                date=summary.forecasted_close_date,
-                description=summary.forecasted_close_date_description,
+            other_dates["forecastedCloseDate"] = _close_date_event(
+                "Forecasted Close Date",
+                summary.forecasted_close_date,
+                summary.forecasted_close_date_description,
             )
         if summary.forecasted_award_date is not None:
             other_dates["forecastedAwardDate"] = SingleDateEvent(
@@ -98,11 +116,8 @@ def to_common(
             date=summary.post_date,
         )
     if summary and summary.close_date is not None:
-        key_dates["closeDate"] = SingleDateEvent(
-            name="Close Date",
-            eventType=EventType.SINGLE_DATE,
-            date=summary.close_date,
-            description=summary.close_date_description,
+        key_dates["closeDate"] = _close_date_event(
+            "Close Date", summary.close_date, summary.close_date_description
         )
     if other_dates:
         key_dates["otherDates"] = other_dates

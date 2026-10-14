@@ -725,3 +725,52 @@ class TestFieldRoundTrip:
         assert src.summary.created_at.month == 6
         assert src.summary.updated_at.year == 2024
         assert src.summary.updated_at.month == 12
+
+
+# (fixture, source description key, accessor for the transformed close-date event)
+CLOSE_DATE_EVENTS = [
+    pytest.param(
+        SOURCE_FIXTURE,
+        "close_date_description",
+        lambda key_dates: key_dates.close_date,
+        id="closeDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        "forecasted_close_date_description",
+        lambda key_dates: key_dates.other_dates["forecastedCloseDate"],
+        id="forecastedCloseDate",
+    ),
+]
+
+ABSENT = object()
+
+
+class TestCloseDateDescription:
+    """Core event descriptions are optional, not nullable: a missing source
+    description must be omitted from the event, never set to None."""
+
+    def _close_event(self, fixture, key, get_event, description):
+        summary = {k: v for k, v in fixture["summary"].items() if k != key}
+        if description is not ABSENT:
+            summary[key] = description
+        result = grants_gov.schemas.Opportunity.to_common(
+            {**fixture, "summary": summary}
+        )
+        assert not result.errors, f"Unexpected errors: {result.errors}"
+        return get_event(result.result.key_dates)
+
+    @pytest.mark.parametrize("fixture,key,get_event", CLOSE_DATE_EVENTS)
+    @pytest.mark.parametrize("description", [None, ABSENT], ids=["null", "absent"])
+    def test_missing_description_is_omitted(self, fixture, key, get_event, description):
+        event = self._close_event(fixture, key, get_event, description)
+        assert event.description is None
+        assert "description" not in event.model_fields_set
+
+    @pytest.mark.parametrize("fixture,key,get_event", CLOSE_DATE_EVENTS)
+    @pytest.mark.parametrize(
+        "description", ["", "Closes at 5pm ET"], ids=["empty", "nonempty"]
+    )
+    def test_present_description_is_kept(self, fixture, key, get_event, description):
+        event = self._close_event(fixture, key, get_event, description)
+        assert event.description == description
