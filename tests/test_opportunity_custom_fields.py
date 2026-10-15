@@ -342,25 +342,49 @@ class TestExtraFields:
         assert result.custom_fields.agency.value.code == "HHS"
         assert not hasattr(result.custom_fields.agency.value, "extraProp")
 
-    def test_strips_unregistered_custom_fields(self):
-        # NOTE: Unlike the TypeScript plugin which passes through unknown custom fields,
-        # Pydantic strips fields not declared on OpportunityCustomFields by default.
+    def test_preserves_unregistered_custom_fields(self):
+        # Requires common-grants-sdk with HHS/simpler-grants-protocol#1121: entries
+        # OpportunityFields does not declare are kept under their exact wire key
+        # and serialize back out unchanged, alongside the typed registered fields.
+        unknown = {
+            "name": "vendorPayload",
+            "fieldType": "object",
+            "value": {"tierLevel": 2, "snake_key": "kept as sent"},
+        }
         result = schema.parse(
             {
                 **base_opportunity,
-                "customFields": {
-                    **valid_custom_fields,
-                    "unknownField": {
-                        "name": "unknownField",
-                        "fieldType": "string",
-                        "value": "extra data",
-                    },
-                },
+                "customFields": {**valid_custom_fields, "vendorPayload": unknown},
             }
         )
 
         assert result.custom_fields.agency.value.code == "HHS"
-        assert not hasattr(result.custom_fields, "unknownField")
+        assert result.custom_fields.legacy_serial_id.value == 12345
+        assert set(result.custom_fields.model_extra) == {"vendorPayload"}
+        assert result.custom_fields.model_extra["vendorPayload"].value == {
+            "tierLevel": 2,
+            "snake_key": "kept as sent",
+        }
+
+        wire = result.model_dump(mode="json", by_alias=True, exclude_unset=True)
+        assert wire["customFields"]["vendorPayload"] == unknown
+        assert schema.parse(wire).custom_fields.model_extra == (
+            result.custom_fields.model_extra
+        )
+
+    @pytest.mark.parametrize(
+        "entry",
+        [{"name": "vendorPayload", "value": "no fieldType"}, "not an envelope"],
+        ids=["missing-fieldType", "bare-value"],
+    )
+    def test_rejects_malformed_unregistered_custom_fields(self, entry):
+        with pytest.raises(ValidationError, match=r"customFields\.vendorPayload"):
+            schema.parse(
+                {
+                    **base_opportunity,
+                    "customFields": {**valid_custom_fields, "vendorPayload": entry},
+                }
+            )
 
 
 # =============================================================================
@@ -474,6 +498,16 @@ class TestTransforms:
         values = [at.value for at in common.accepted_applicant_types]
         assert "government_state" in values
         assert "government_county" in values
+
+    def test_unmapped_applicant_type_kept_as_custom_value(self):
+        summary = {**SOURCE_FIXTURE["summary"], "applicant_types": ["tribal_council"]}
+        result = grants_gov.schemas.Opportunity.to_common(
+            {**SOURCE_FIXTURE, "summary": summary}
+        )
+        assert not result.errors, f"Unexpected errors: {result.errors}"
+        [applicant_type] = result.result.accepted_applicant_types
+        assert applicant_type.value == "custom"
+        assert applicant_type.custom_value == "tribal_council"
 
     def test_other_dates_keys(self):
         opp_schema = grants_gov.schemas.Opportunity

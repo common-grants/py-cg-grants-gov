@@ -80,13 +80,13 @@ def to_common(
         if summary.archive_date is not None:
             other_dates["archiveDate"] = SingleDateEvent(
                 name="Archive Date",
-                eventType=EventType.SINGLE_DATE,
+                event_type=EventType.SINGLE_DATE,
                 date=summary.archive_date,
             )
         if summary.forecasted_post_date is not None:
             other_dates["forecastedPostDate"] = SingleDateEvent(
                 name="Forecasted Post Date",
-                eventType=EventType.SINGLE_DATE,
+                event_type=EventType.SINGLE_DATE,
                 date=summary.forecasted_post_date,
             )
         if summary.forecasted_close_date is not None:
@@ -98,13 +98,13 @@ def to_common(
         if summary.forecasted_award_date is not None:
             other_dates["forecastedAwardDate"] = SingleDateEvent(
                 name="Forecasted Award Date",
-                eventType=EventType.SINGLE_DATE,
+                event_type=EventType.SINGLE_DATE,
                 date=summary.forecasted_award_date,
             )
         if summary.forecasted_project_start_date is not None:
             other_dates["forecastedProjectStartDate"] = SingleDateEvent(
                 name="Forecasted Project Start Date",
-                eventType=EventType.SINGLE_DATE,
+                event_type=EventType.SINGLE_DATE,
                 date=summary.forecasted_project_start_date,
             )
 
@@ -112,7 +112,7 @@ def to_common(
     if summary and summary.post_date is not None:
         key_dates["postDate"] = SingleDateEvent(
             name="Post Date",
-            eventType=EventType.SINGLE_DATE,
+            event_type=EventType.SINGLE_DATE,
             date=summary.post_date,
         )
     if summary and summary.close_date is not None:
@@ -135,7 +135,7 @@ def to_common(
                 accepted_applicant_types.append(
                     ApplicantType(
                         value=ApplicantTypeOptions.custom,
-                        customValue=raw,
+                        custom_value=raw,
                     )
                 )
 

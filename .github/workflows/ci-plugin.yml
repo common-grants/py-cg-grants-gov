@@ -6,6 +6,7 @@ on:
       - "cg_grants_gov/**"
       - "pyproject.toml"
       - "poetry.lock"
+      - "tests/**"
       - ".github/workflows/ci-plugin.yml"
 
 jobs:
@@ -32,6 +33,17 @@ jobs:
 
       - name: Install dependencies
         run: make install
+
+      # Test-only: the custom-field tests need HHS/simpler-grants-protocol#1121,
+      # which no SDK release has yet. Swap in that exact commit until one does;
+      # pyproject.toml and poetry.lock stay on the released range. The released
+      # 0.8.1 and this commit share a version string, so the guard checks the commit.
+      - name: Install candidate SDK
+        env:
+          SDK_SHA: 13ac612f3f1fb57f449eb7083988a13cfa9c64be
+        run: |
+          poetry run python -m pip install "common-grants-sdk @ git+https://github.com/HHS/simpler-grants-protocol.git@${SDK_SHA}#subdirectory=lib/python-sdk"
+          poetry run python -m pip freeze | grep -F "simpler-grants-protocol.git@${SDK_SHA}#subdirectory=lib/python-sdk"
 
       - name: Run checks
         run: make checks
