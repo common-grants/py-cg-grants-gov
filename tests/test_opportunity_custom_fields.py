@@ -342,25 +342,49 @@ class TestExtraFields:
         assert result.custom_fields.agency.value.code == "HHS"
         assert not hasattr(result.custom_fields.agency.value, "extraProp")
 
-    def test_strips_unregistered_custom_fields(self):
-        # NOTE: Unlike the TypeScript plugin which passes through unknown custom fields,
-        # Pydantic strips fields not declared on OpportunityCustomFields by default.
+    def test_preserves_unregistered_custom_fields(self):
+        # Requires common-grants-sdk with HHS/simpler-grants-protocol#1121: entries
+        # OpportunityFields does not declare are kept under their exact wire key
+        # and serialize back out unchanged, alongside the typed registered fields.
+        unknown = {
+            "name": "vendorPayload",
+            "fieldType": "object",
+            "value": {"tierLevel": 2, "snake_key": "kept as sent"},
+        }
         result = schema.parse(
             {
                 **base_opportunity,
-                "customFields": {
-                    **valid_custom_fields,
-                    "unknownField": {
-                        "name": "unknownField",
-                        "fieldType": "string",
-                        "value": "extra data",
-                    },
-                },
+                "customFields": {**valid_custom_fields, "vendorPayload": unknown},
             }
         )
 
         assert result.custom_fields.agency.value.code == "HHS"
-        assert not hasattr(result.custom_fields, "unknownField")
+        assert result.custom_fields.legacy_serial_id.value == 12345
+        assert set(result.custom_fields.model_extra) == {"vendorPayload"}
+        assert result.custom_fields.model_extra["vendorPayload"].value == {
+            "tierLevel": 2,
+            "snake_key": "kept as sent",
+        }
+
+        wire = result.model_dump(mode="json", by_alias=True, exclude_unset=True)
+        assert wire["customFields"]["vendorPayload"] == unknown
+        assert schema.parse(wire).custom_fields.model_extra == (
+            result.custom_fields.model_extra
+        )
+
+    @pytest.mark.parametrize(
+        "entry",
+        [{"name": "vendorPayload", "value": "no fieldType"}, "not an envelope"],
+        ids=["missing-fieldType", "bare-value"],
+    )
+    def test_rejects_malformed_unregistered_custom_fields(self, entry):
+        with pytest.raises(ValidationError, match=r"customFields\.vendorPayload"):
+            schema.parse(
+                {
+                    **base_opportunity,
+                    "customFields": {**valid_custom_fields, "vendorPayload": entry},
+                }
+            )
 
 
 # =============================================================================
@@ -474,6 +498,16 @@ class TestTransforms:
         values = [at.value for at in common.accepted_applicant_types]
         assert "government_state" in values
         assert "government_county" in values
+
+    def test_unmapped_applicant_type_kept_as_custom_value(self):
+        summary = {**SOURCE_FIXTURE["summary"], "applicant_types": ["tribal_council"]}
+        result = grants_gov.schemas.Opportunity.to_common(
+            {**SOURCE_FIXTURE, "summary": summary}
+        )
+        assert not result.errors, f"Unexpected errors: {result.errors}"
+        [applicant_type] = result.result.accepted_applicant_types
+        assert applicant_type.value == "custom"
+        assert applicant_type.custom_value == "tribal_council"
 
     def test_other_dates_keys(self):
         opp_schema = grants_gov.schemas.Opportunity
@@ -725,3 +759,121 @@ class TestFieldRoundTrip:
         assert src.summary.created_at.month == 6
         assert src.summary.updated_at.year == 2024
         assert src.summary.updated_at.month == 12
+
+
+# (fixture, source description key, accessor for the transformed close-date event)
+CLOSE_DATE_EVENTS = [
+    pytest.param(
+        SOURCE_FIXTURE,
+        "close_date_description",
+        lambda key_dates: key_dates.close_date,
+        id="closeDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        "forecasted_close_date_description",
+        lambda key_dates: key_dates.other_dates["forecastedCloseDate"],
+        id="forecastedCloseDate",
+    ),
+]
+
+ABSENT = object()
+
+
+class TestCloseDateDescription:
+    """Core event descriptions are optional, not nullable: a missing source
+    description must be omitted from the event, never set to None."""
+
+    def _close_event(self, fixture, key, get_event, description):
+        summary = {k: v for k, v in fixture["summary"].items() if k != key}
+        if description is not ABSENT:
+            summary[key] = description
+        result = grants_gov.schemas.Opportunity.to_common(
+            {**fixture, "summary": summary}
+        )
+        assert not result.errors, f"Unexpected errors: {result.errors}"
+        return get_event(result.result.key_dates)
+
+    @pytest.mark.parametrize("fixture,key,get_event", CLOSE_DATE_EVENTS)
+    @pytest.mark.parametrize("description", [None, ABSENT], ids=["null", "absent"])
+    def test_missing_description_is_omitted(self, fixture, key, get_event, description):
+        event = self._close_event(fixture, key, get_event, description)
+        assert event.description is None
+        assert "description" not in event.model_fields_set
+
+    @pytest.mark.parametrize("fixture,key,get_event", CLOSE_DATE_EVENTS)
+    @pytest.mark.parametrize(
+        "description", ["", "Closes at 5pm ET"], ids=["empty", "nonempty"]
+    )
+    def test_present_description_is_kept(self, fixture, key, get_event, description):
+        event = self._close_event(fixture, key, get_event, description)
+        assert event.description == description
+
+
+def _event(name, date, **extra):
+    return {"name": name, "eventType": "singleDate", "date": date, **extra}
+
+
+# (fixture, keyDates path, expected wire event) for every transformed event
+WIRE_EVENTS = [
+    pytest.param(
+        SOURCE_FIXTURE,
+        ("postDate",),
+        _event("Post Date", "2025-01-01"),
+        id="postDate",
+    ),
+    pytest.param(
+        SOURCE_FIXTURE,
+        ("closeDate",),
+        _event("Close Date", "2025-03-31", description="Applications close at 5pm ET"),
+        id="closeDate",
+    ),
+    pytest.param(
+        SOURCE_FIXTURE,
+        ("otherDates", "archiveDate"),
+        _event("Archive Date", "2025-06-30"),
+        id="archiveDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        ("otherDates", "forecastedPostDate"),
+        _event("Forecasted Post Date", "2025-03-01"),
+        id="forecastedPostDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        ("otherDates", "forecastedCloseDate"),
+        _event(
+            "Forecasted Close Date",
+            "2025-09-30",
+            description="Expected to close in late September",
+        ),
+        id="forecastedCloseDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        ("otherDates", "forecastedAwardDate"),
+        _event("Forecasted Award Date", "2025-12-01"),
+        id="forecastedAwardDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        ("otherDates", "forecastedProjectStartDate"),
+        _event("Forecasted Project Start Date", "2026-01-01"),
+        id="forecastedProjectStartDate",
+    ),
+]
+
+
+class TestWireEvents:
+    """Core requires eventType on every event, so the exclude_unset wire dump
+    must keep it on each transformed date."""
+
+    @pytest.mark.parametrize("fixture,path,expected", WIRE_EVENTS)
+    def test_event_keeps_event_type(self, fixture, path, expected):
+        result = grants_gov.schemas.Opportunity.to_common(fixture)
+        assert not result.errors, f"Unexpected errors: {result.errors}"
+        event = result.result.model_dump(mode="json", by_alias=True, exclude_unset=True)
+        for key in ("keyDates", *path):
+            event = event[key]
+        assert event == expected
