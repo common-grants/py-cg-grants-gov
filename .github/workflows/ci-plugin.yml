@@ -53,3 +53,30 @@ jobs:
 
       - name: Build package
         run: make build
+
+  # The published range starts at the locked release, which lacks the candidate
+  # SDK's #1121 features and its eventType field-set hook. Run the transform
+  # tests on it so wire output stays valid for released-SDK consumers.
+  released-sdk-transforms:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install Poetry
+        uses: Gr1N/setup-poetry@v9
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Run transform tests on the locked SDK release
+        run: >-
+          make test args="
+          tests/test_opportunity_custom_fields.py::TestTransforms
+          tests/test_opportunity_custom_fields.py::TestFieldRoundTrip
+          tests/test_opportunity_custom_fields.py::TestCloseDateDescription
+          tests/test_opportunity_custom_fields.py::TestWireEvents"

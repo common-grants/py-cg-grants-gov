@@ -37,6 +37,8 @@ make checks test
 
 `make install` restores the locked release, so rerun the install afterward. Drop this step and the matching CI step once a release includes #1121.
 
+A second CI job keeps the locked release and runs only the transform tests (`TestTransforms`, `TestFieldRoundTrip`, `TestCloseDateDescription`, `TestWireEvents`), so wire output stays valid on the oldest SDK the published range allows. After `make install`, run them with `make test args="tests/test_opportunity_custom_fields.py::TestWireEvents ..."`.
+
 ## Code quality
 
 This project uses:

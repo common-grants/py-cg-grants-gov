@@ -27,18 +27,20 @@ def _cf(name: str, field_type: str, value) -> dict:
     return {"name": name, "fieldType": field_type, "value": value}
 
 
-def _close_date_event(
-    name: str, close_date: date, description: Optional[str]
+def _single_date_event(
+    name: str, event_date: date, description: Optional[str] = None
 ) -> SingleDateEvent:
-    """Build a close-date event, omitting a missing description.
+    """Build a single-date event, omitting a missing description.
 
-    Core optional properties may be omitted but never null, so a missing source
-    description is left off the event instead of being passed as None.
+    Validating the alias-keyed wire dict marks eventType as set, so
+    exclude_unset dumps keep Core's required discriminator on every supported
+    SDK release. Core optional properties may be omitted but never null, so a
+    missing source description is left off the event instead of being None.
     """
     event: dict = {
         "name": name,
         "eventType": EventType.SINGLE_DATE,
-        "date": close_date,
+        "date": event_date,
     }
     if description is not None:
         event["description"] = description
@@ -78,45 +80,33 @@ def to_common(
     other_dates: dict = {}
     if summary:
         if summary.archive_date is not None:
-            other_dates["archiveDate"] = SingleDateEvent(
-                name="Archive Date",
-                event_type=EventType.SINGLE_DATE,
-                date=summary.archive_date,
+            other_dates["archiveDate"] = _single_date_event(
+                "Archive Date", summary.archive_date
             )
         if summary.forecasted_post_date is not None:
-            other_dates["forecastedPostDate"] = SingleDateEvent(
-                name="Forecasted Post Date",
-                event_type=EventType.SINGLE_DATE,
-                date=summary.forecasted_post_date,
+            other_dates["forecastedPostDate"] = _single_date_event(
+                "Forecasted Post Date", summary.forecasted_post_date
             )
         if summary.forecasted_close_date is not None:
-            other_dates["forecastedCloseDate"] = _close_date_event(
+            other_dates["forecastedCloseDate"] = _single_date_event(
                 "Forecasted Close Date",
                 summary.forecasted_close_date,
                 summary.forecasted_close_date_description,
             )
         if summary.forecasted_award_date is not None:
-            other_dates["forecastedAwardDate"] = SingleDateEvent(
-                name="Forecasted Award Date",
-                event_type=EventType.SINGLE_DATE,
-                date=summary.forecasted_award_date,
+            other_dates["forecastedAwardDate"] = _single_date_event(
+                "Forecasted Award Date", summary.forecasted_award_date
             )
         if summary.forecasted_project_start_date is not None:
-            other_dates["forecastedProjectStartDate"] = SingleDateEvent(
-                name="Forecasted Project Start Date",
-                event_type=EventType.SINGLE_DATE,
-                date=summary.forecasted_project_start_date,
+            other_dates["forecastedProjectStartDate"] = _single_date_event(
+                "Forecasted Project Start Date", summary.forecasted_project_start_date
             )
 
     key_dates: dict = {}
     if summary and summary.post_date is not None:
-        key_dates["postDate"] = SingleDateEvent(
-            name="Post Date",
-            event_type=EventType.SINGLE_DATE,
-            date=summary.post_date,
-        )
+        key_dates["postDate"] = _single_date_event("Post Date", summary.post_date)
     if summary and summary.close_date is not None:
-        key_dates["closeDate"] = _close_date_event(
+        key_dates["closeDate"] = _single_date_event(
             "Close Date", summary.close_date, summary.close_date_description
         )
     if other_dates:

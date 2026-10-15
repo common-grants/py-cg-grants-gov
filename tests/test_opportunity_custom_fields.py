@@ -808,3 +808,72 @@ class TestCloseDateDescription:
     def test_present_description_is_kept(self, fixture, key, get_event, description):
         event = self._close_event(fixture, key, get_event, description)
         assert event.description == description
+
+
+def _event(name, date, **extra):
+    return {"name": name, "eventType": "singleDate", "date": date, **extra}
+
+
+# (fixture, keyDates path, expected wire event) for every transformed event
+WIRE_EVENTS = [
+    pytest.param(
+        SOURCE_FIXTURE,
+        ("postDate",),
+        _event("Post Date", "2025-01-01"),
+        id="postDate",
+    ),
+    pytest.param(
+        SOURCE_FIXTURE,
+        ("closeDate",),
+        _event("Close Date", "2025-03-31", description="Applications close at 5pm ET"),
+        id="closeDate",
+    ),
+    pytest.param(
+        SOURCE_FIXTURE,
+        ("otherDates", "archiveDate"),
+        _event("Archive Date", "2025-06-30"),
+        id="archiveDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        ("otherDates", "forecastedPostDate"),
+        _event("Forecasted Post Date", "2025-03-01"),
+        id="forecastedPostDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        ("otherDates", "forecastedCloseDate"),
+        _event(
+            "Forecasted Close Date",
+            "2025-09-30",
+            description="Expected to close in late September",
+        ),
+        id="forecastedCloseDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        ("otherDates", "forecastedAwardDate"),
+        _event("Forecasted Award Date", "2025-12-01"),
+        id="forecastedAwardDate",
+    ),
+    pytest.param(
+        FORECAST_FIXTURE,
+        ("otherDates", "forecastedProjectStartDate"),
+        _event("Forecasted Project Start Date", "2026-01-01"),
+        id="forecastedProjectStartDate",
+    ),
+]
+
+
+class TestWireEvents:
+    """Core requires eventType on every event, so the exclude_unset wire dump
+    must keep it on each transformed date."""
+
+    @pytest.mark.parametrize("fixture,path,expected", WIRE_EVENTS)
+    def test_event_keeps_event_type(self, fixture, path, expected):
+        result = grants_gov.schemas.Opportunity.to_common(fixture)
+        assert not result.errors, f"Unexpected errors: {result.errors}"
+        event = result.result.model_dump(mode="json", by_alias=True, exclude_unset=True)
+        for key in ("keyDates", *path):
+            event = event[key]
+        assert event == expected
