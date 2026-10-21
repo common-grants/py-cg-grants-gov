@@ -1,9 +1,29 @@
 """Tests for Grants.gov plugin Opportunity custom fields."""
 
 import pytest
+from common_grants_sdk.extensions import CustomField
 from pydantic import ValidationError
 
 from cg_grants_gov import grants_gov
+from cg_grants_gov.models import OpportunityFields
+
+
+def _sdk_keeps_unregistered_custom_fields() -> bool:
+    """Whether the installed SDK keeps undeclared entries as validated CustomFields.
+
+    Probes behavior, not the version: unreleased SDK commits share the latest
+    release's version string.
+    """
+    probe = {"name": "probe", "fieldType": "string", "value": "kept"}
+    extra = OpportunityFields.model_validate({"probe": probe}).model_extra or {}
+    return isinstance(extra.get("probe"), CustomField)
+
+
+requires_unregistered_custom_fields = pytest.mark.skipif(
+    not _sdk_keeps_unregistered_custom_fields(),
+    reason="installed common-grants-sdk drops unregistered custom fields; "
+    "DEVELOPMENT.md shows how to install the candidate SDK",
+)
 
 # =============================================================================
 # Test Data
@@ -342,10 +362,11 @@ class TestExtraFields:
         assert result.custom_fields.agency.value.code == "HHS"
         assert not hasattr(result.custom_fields.agency.value, "extraProp")
 
+    @requires_unregistered_custom_fields
     def test_preserves_unregistered_custom_fields(self):
-        # Requires common-grants-sdk with HHS/simpler-grants-protocol#1121: entries
-        # OpportunityFields does not declare are kept under their exact wire key
-        # and serialize back out unchanged, alongside the typed registered fields.
+        # Entries OpportunityFields does not declare are kept under their exact
+        # wire key and serialize back out unchanged, alongside the typed
+        # registered fields.
         unknown = {
             "name": "vendorPayload",
             "fieldType": "object",
@@ -372,6 +393,7 @@ class TestExtraFields:
             result.custom_fields.model_extra
         )
 
+    @requires_unregistered_custom_fields
     @pytest.mark.parametrize(
         "entry",
         [{"name": "vendorPayload", "value": "no fieldType"}, "not an envelope"],
