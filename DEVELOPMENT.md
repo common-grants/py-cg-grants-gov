@@ -31,13 +31,13 @@ make clean         # Remove build artifacts
 The custom-field tests require [HHS/simpler-grants-protocol#1121](https://github.com/HHS/simpler-grants-protocol/issues/1121) (unregistered custom fields are kept and validated), which no `common-grants-sdk` release contains yet. CI installs the same pinned commit after `make install`; to match it locally:
 
 ```bash
-poetry run python -m pip install "common-grants-sdk @ git+https://github.com/HHS/simpler-grants-protocol.git@13ac612f3f1fb57f449eb7083988a13cfa9c64be#subdirectory=lib/python-sdk"
+poetry run python -m pip install "common-grants-sdk @ git+https://github.com/HHS/simpler-grants-protocol.git@36c3b70185d7d20042a9328ee48f64a5068cecab#subdirectory=lib/python-sdk"
 make checks test
 ```
 
 `make install` restores the locked release, so rerun the install afterward. Drop this step and the matching CI step once a release includes #1121.
 
-A second CI job keeps the locked release and runs only the transform tests (`TestTransforms`, `TestFieldRoundTrip`, `TestCloseDateDescription`, `TestWireEvents`), so wire output stays valid on the oldest SDK the published range allows. After `make install`, run them with `make test args="tests/test_opportunity_custom_fields.py::TestWireEvents ..."`.
+On the locked release, `make checks` passes and `make test` skips the tests that need #1121 (`make test args="-rs"` lists them). A second CI job runs both there, so the package type-checks and wire output stays valid on the oldest SDK the published range allows.
 
 ## Code quality
 
