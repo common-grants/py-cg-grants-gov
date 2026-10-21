@@ -122,10 +122,11 @@ def to_common(
                     ApplicantType(value=ApplicantTypeOptions(mapped))
                 )
             else:
+                # Validate the wire dict: released SDKs type the keyword as
+                # customValue, newer ones as custom_value.
                 accepted_applicant_types.append(
-                    ApplicantType(
-                        value=ApplicantTypeOptions.custom,
-                        custom_value=raw,
+                    ApplicantType.model_validate(
+                        {"value": ApplicantTypeOptions.custom, "customValue": raw}
                     )
                 )
 
