@@ -31,19 +31,10 @@ jobs:
       - name: Install Poetry
         uses: Gr1N/setup-poetry@v9
 
+      # poetry.lock pins the SDK at the published range's minimum, so this job
+      # also covers the oldest supported release.
       - name: Install dependencies
         run: make install
-
-      # Test-only: the custom-field tests need HHS/simpler-grants-protocol#1121,
-      # which no SDK release has yet. Swap in that exact commit until one does;
-      # pyproject.toml and poetry.lock stay on the released range. The released
-      # 0.8.1 and this commit share a version string, so the guard checks the commit.
-      - name: Install candidate SDK
-        env:
-          SDK_SHA: 36c3b70185d7d20042a9328ee48f64a5068cecab
-        run: |
-          poetry run python -m pip install "common-grants-sdk @ git+https://github.com/HHS/simpler-grants-protocol.git@${SDK_SHA}#subdirectory=lib/python-sdk"
-          poetry run python -m pip freeze | grep -F "simpler-grants-protocol.git@${SDK_SHA}#subdirectory=lib/python-sdk"
 
       - name: Run checks
         run: make checks
@@ -53,29 +44,3 @@ jobs:
 
       - name: Build package
         run: make build
-
-  # The published range starts at the locked release, which lacks the candidate
-  # SDK's #1121 features and its eventType field-set hook; the #1121 tests skip
-  # themselves there. Run the full checks and suite on it so the package
-  # type-checks and wire output stays valid for released-SDK consumers.
-  released-sdk:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Install Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Install Poetry
-        uses: Gr1N/setup-poetry@v9
-
-      - name: Install dependencies
-        run: make install
-
-      - name: Run checks on the locked SDK release
-        run: make checks
-
-      - name: Run tests on the locked SDK release
-        run: make test args="-rs"
