@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/common-grants/py-cg-grants-gov/compare/v0.3.0...v0.3.1) (2026-10-23)
+
+
+### Bug Fixes
+
+* align plugin transforms and tests with the upcoming SDK ([#14](https://github.com/common-grants/py-cg-grants-gov/issues/14)) ([c7257db](https://github.com/common-grants/py-cg-grants-gov/commit/c7257dbb9bcc1657c1c9170dbe5e5f28ac94f760))
+
 ## [0.3.0](https://github.com/common-grants/py-cg-grants-gov/compare/v0.2.0...v0.3.0) (2026-07-17)
 
 
