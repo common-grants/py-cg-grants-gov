@@ -9,7 +9,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/HHS/py-cg-grants-gov.git
+git clone https://github.com/common-grants/py-cg-grants-gov.git
 cd py-cg-grants-gov
 
 # Install dependencies

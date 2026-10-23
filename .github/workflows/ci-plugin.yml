@@ -31,8 +31,8 @@ jobs:
       - name: Install Poetry
         uses: Gr1N/setup-poetry@v9
 
-      # poetry.lock pins the SDK at the published range's minimum, so this job
-      # also covers the oldest supported release.
+      # poetry.lock pins the SDK at the published range's minimum (keep it
+      # there), so this job also covers the oldest supported release.
       - name: Install dependencies
         run: make install
 
