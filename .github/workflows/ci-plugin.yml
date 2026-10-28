@@ -36,6 +36,28 @@ jobs:
       - name: Install dependencies
         run: make install
 
+      - name: Check the locked SDK is the supported minimum
+        run: |
+          poetry run python - <<'EOF'
+          import re
+          import sys
+          import tomllib
+          from importlib.metadata import version
+
+          with open("pyproject.toml", "rb") as f:
+              spec = tomllib.load(f)["tool"]["poetry"]["dependencies"]["common-grants-sdk"]
+          match = re.fullmatch(r">=\s*(\S+)", spec)
+          if not match:
+              sys.exit(f"Expected a '>=' floor for common-grants-sdk, found {spec!r}")
+          floor, installed = match.group(1), version("common-grants-sdk")
+          if installed != floor:
+              sys.exit(
+                  f"poetry.lock installs common-grants-sdk {installed}, but the floor in "
+                  f"pyproject.toml is {floor}. Lock the SDK at the floor so CI tests it."
+              )
+          print(f"common-grants-sdk {installed} matches the pyproject.toml floor")
+          EOF
+
       - name: Run checks
         run: make checks
 
