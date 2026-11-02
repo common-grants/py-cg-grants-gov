@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/common-grants/py-cg-grants-gov/compare/v0.3.0...v0.4.0) (2026-10-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* adopt published common-grants-sdk 0.9.0 ([#17](https://github.com/common-grants/py-cg-grants-gov/issues/17))
+
+### Bug Fixes
+
+* adopt published common-grants-sdk 0.9.0 ([#17](https://github.com/common-grants/py-cg-grants-gov/issues/17)) ([6e34ee9](https://github.com/common-grants/py-cg-grants-gov/commit/6e34ee9bf649ec28aea31ff4f5d737c2e130b4dd))
+* align plugin transforms and tests with the upcoming SDK ([#14](https://github.com/common-grants/py-cg-grants-gov/issues/14)) ([c7257db](https://github.com/common-grants/py-cg-grants-gov/commit/c7257dbb9bcc1657c1c9170dbe5e5f28ac94f760))
+
 ## [0.3.0](https://github.com/common-grants/py-cg-grants-gov/compare/v0.2.0...v0.3.0) (2026-07-17)
 
 
